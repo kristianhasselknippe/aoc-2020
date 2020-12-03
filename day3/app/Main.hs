@@ -22,20 +22,18 @@ hasTree line xPos =
 
 countTreesInPath :: [String] -> (Int, Int) -> Int
 countTreesInPath lines (right, down) =
-  let linesInPath = map snd $ filter (\(i,l) -> i `mod` down == 0) $ (zip [0..] lines)
-  in sum $ map (\x -> case x of
-                   True -> 1
-                   False -> 0) $ zipWith hasTree linesInPath [x * right | x <- [0..]]
+  let linesInPath = map snd $ filter (\(i,l) -> i `mod` down == 0) $ zip [0..] lines
+  in sum $ map (\x -> if x then 1 else 0) $ zipWith hasTree linesInPath [x * right | x <- [0..]]
 
 main :: IO ()
 main = do
   argv <- getArgs
   print argv
-  input <- parseInput (argv !! 0)
+  input <- parseInput (head argv)
   print input
-  let lines = (filter (\l -> length l > 0)) $ (splitOn "\n" input)
+  let lines = filter (not . null)  $ splitOn "\n" input
   let resultP1 = countTreesInPath lines (3, 1)
-  print ("Result p1: " ++ (show resultP1))
+  print ("Result p1: " ++ show resultP1)
   let paths = [(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)]
   let resultP2 = product $ map (countTreesInPath lines) paths
-  print ("result p2: " ++ (show resultP2))
+  print ("result p2: " ++ show resultP2)
