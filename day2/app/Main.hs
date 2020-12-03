@@ -67,8 +67,8 @@ main = do
   print currentDir
   fileContent <- readFile (currentDir ++ "/../input-sets/day2-1.txt")
   --print fileContent
-  let lines  = filter (\x -> (length x) > 0) (splitOn "\n" fileContent)
+  let lines  = filter (\x -> (length x) > 0) $ splitOn "\n" fileContent
       policies = map parseLine lines
-      validated = filter id (map validatePart2 policies)
+      validated = filter id $ map validatePart2 policies
       numValidated = length validated
   print ("Number of valid: " ++ (show numValidated))
