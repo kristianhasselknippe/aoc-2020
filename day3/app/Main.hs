@@ -1,13 +1,8 @@
 module Main where
 
-import Lib
-
-import System.IO
 import System.Directory
-import Data.List
 import Data.List.Split
-import Text.Read
-import System.Environment(getArgs, getProgName)
+import System.Environment(getArgs)
 
 parseInput :: String -> IO String
 parseInput path = do
@@ -22,7 +17,7 @@ hasTree line xPos =
 
 countTreesInPath :: [String] -> (Int, Int) -> Int
 countTreesInPath lines (right, down) =
-  let linesInPath = map snd $ filter (\(i,l) -> i `mod` down == 0) $ zip [0..] lines
+  let linesInPath = map snd $ filter (\(i,_) -> i `mod` down == 0) $ zip [0..] lines
   in sum $ map (\x -> if x then 1 else 0) $ zipWith hasTree linesInPath [x * right | x <- [0..]]
 
 main :: IO ()
