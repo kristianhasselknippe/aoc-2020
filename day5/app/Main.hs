@@ -4,6 +4,7 @@ module Main where
 import System.Directory
 import System.Environment
 import Data.List.Split
+import Data.Sort
 import Debug.Trace
 
 data Range = Range Int Int
@@ -44,5 +45,10 @@ main = do
   print ("Test 1: " ++ show test1Res)
   let passes = splitOn "\n" content
   let seats = map parseBoardingPass passes
-  let largestId = maximum $ map rowId seats
+  let seatIds = map rowId seats
+  let largestId = maximum seatIds
   print ("Result part 1: " ++ show largestId)
+
+  let sortedList = sort seatIds
+  let missing = map (\(x,y) -> x+1) $ filter (\(x,y) -> x /= y - 1 && x == y - 2) $ zip sortedList (drop 1 sortedList)
+  print ("Result part 2: " ++ show missing)
