@@ -43,13 +43,22 @@ merge [h,t] = h || t
 merge (x:xs) = x || merge xs
 merge [] = False
 
-canHaveBag :: BagInfo -> Map.Map BagInfo Bag -> Bag -> Bool
+type BagMap = Map.Map BagInfo Bag
+
+canHaveBag :: BagInfo -> BagMap -> Bag -> Bool
 canHaveBag target bags bag =
   let (_, innerBags) = bag
       innerBagInfos = map snd innerBags
       thisHasTarget = target `elem` innerBagInfos
       innerHasTarget = merge $ map (\innerBagInfo -> canHaveBag target bags (bags Map.! innerBagInfo)) innerBagInfos
   in thisHasTarget || innerHasTarget
+
+howManyBagsContained :: BagMap -> Bag -> Int
+howManyBagsContained bagMap (info, innerBags) =
+  let numBagsInThis = innerBags |> map fst |> sum
+      childBags = innerBags |> map (\(count, bagInfo) -> bagMap Map.! bagInfo |> howManyBagsContained bagMap |> (*) count) |> sum
+  in numBagsInThis + childBags
+
 
 main :: IO ()
 main = do
@@ -62,3 +71,5 @@ main = do
   let target = ("shiny", "gold")
   let res = length $ filter id $ map (canHaveBag target bags) parsed
   print ("Part 1: " ++ show res)
+  let resPart2 = howManyBagsContained bags (bags Map.! target)
+  print ("Part 2: " ++ show resPart2)
