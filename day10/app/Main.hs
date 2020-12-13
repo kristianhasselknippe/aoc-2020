@@ -40,19 +40,23 @@ buildGraph connections l =
       ret = Map.insert h nextItems connections
   in buildGraph ret rest
 
-countPathsInGraph :: Connections -> Set.Set Int -> Int -> Int
-countPathsInGraph graph visited from =
-   let targets = traceShow visited (graph Map.! from)
-   in case targets of
-        [] -> 1
-        _ -> targets
-               |> filter (\x -> Set.notMember x visited)
-               |> map (\x -> countPathsInGraph graph (Set.insert x visited) x)
-               |> sum
+type Memo = Map.Map [Int] Int
+
+countPathsInGraph :: Connections -> Memo -> [Int] -> Int -> (Int, Memo)
+-- "key for memoization is the path up to `from`, and the value means number of paths that has this path that originate from this path"
+countPathsInGraph graph memo path from =
+   let targets = graph Map.! from :: [Int]
+   in do
+     target <- targets :: Int
+     let newPath = path ++ [target]
+     return (if (Map.member newPath memo)
+        then (memo Map.! newPath, memo)
+        else countPathsInGraph graph memo newPath target)
 
 part2 list =
         let graph = buildGraph Map.empty list
-        in trace ("Counting paths for graph: " ++ show graph) (countPathsInGraph graph Set.empty 0)
+            (count, memo) = trace ("Counting paths for graph: " ++ show graph) (countPathsInGraph graph Map.empty [] 0)
+        in count
 
 
 main :: IO ()
