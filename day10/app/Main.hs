@@ -42,21 +42,24 @@ buildGraph connections l =
 
 type Memo = Map.Map [Int] Int
 
-countPathsInGraph :: Connections -> Memo -> [Int] -> Int -> (Int, Memo)
+countPathsInGraph :: Connections -> Memo -> [Int] -> Int -> (Memo, Int)
 -- "key for memoization is the path up to `from`, and the value means number of paths that has this path that originate from this path"
-countPathsInGraph graph memo path from =
-   let targets = graph Map.! from :: [Int]
-   in do
-     target <- targets :: Int
-     let newPath = path ++ [target]
-     return (if (Map.member newPath memo)
-        then (memo Map.! newPath, memo)
-        else countPathsInGraph graph memo newPath target)
+countpathsingraph graph memo path from =
+  if trace ("member: " ++ show path) (map.member path memo)
+    then trace ("getting from memo: " ++ show path) (memo, memo map.! path)
+    else
+      let targets = graph map.! from
+          (m, results) = if length targets == 0
+                           then (memo, [1])
+                           else targets |> mapaccuml (\ m target -> countpathsingraph graph m (path ++ [target]) target) memo
+          res = sum results
+      in (map.insert path res m, res)
+
 
 part2 list =
         let graph = buildGraph Map.empty list
-            (count, memo) = trace ("Counting paths for graph: " ++ show graph) (countPathsInGraph graph Map.empty [] 0)
-        in count
+        in trace ("Counting paths for graph: " ++ show graph) (countPathsInGraph graph Map.empty [] 0)
+
 
 
 main :: IO ()
@@ -78,8 +81,8 @@ main = do
   let t1res = testInput |> sort |> part2
   print ("Part 2 test 1 result: " ++ show t1res)
 
-  let t2res = testInput2 |> sort |> part2
-  print ("Part 2 test 2 result: " ++ show t2res)
+  -- let t2res = testInput2 |> sort |> part2
+  -- print ("Part 2 test 2 result: " ++ show t2res)
 
   let sortedInput = input |> sort
   print ("Input: " ++ show sortedInput)
