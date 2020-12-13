@@ -26,40 +26,32 @@ isBetween x a b =
 validConnection :: Int -> Int -> Bool
 validConnection a b = isBetween (abs (b - a)) 1 3
 
-type Connections = Map.Map Int [Int]
-
 validConnections :: [Int] -> [Int]
 validConnections (a:rest) = do
   rest |> takeWhile (\x -> validConnection a x)
 
-buildGraph :: Connections -> [Int] -> Connections
-buildGraph c [] = c
-buildGraph connections l =
-  let (h:rest) = l
-      nextItems = validConnections l
-      ret = Map.insert h nextItems connections
-  in buildGraph ret rest
+
+validRestLists list =
+    let heads = validConnections list
+        (_:xs) = list
+    in zip heads [1..] |> map (\(h, i) -> h:(drop i xs))
 
 type Memo = Map.Map [Int] Int
 
-countPathsInGraph :: Connections -> Memo -> [Int] -> Int -> (Memo, Int)
--- "key for memoization is the path up to `from`, and the value means number of paths that has this path that originate from this path"
-countpathsingraph graph memo path from =
-  if trace ("member: " ++ show path) (map.member path memo)
-    then trace ("getting from memo: " ++ show path) (memo, memo map.! path)
-    else
-      let targets = graph map.! from
-          (m, results) = if length targets == 0
-                           then (memo, [1])
-                           else targets |> mapaccuml (\ m target -> countpathsingraph graph m (path ++ [target]) target) memo
-          res = sum results
-      in (map.insert path res m, res)
-
+countPathsInGraph :: [Int] -> Memo -> (Memo, Int)
+countPathsInGraph [_] m = (Map.insert [] 1 m, 1)
+countPathsInGraph rest memo =
+   if Map.member rest memo
+      then (memo, memo Map.! rest)
+      else
+        let restLists = validRestLists rest
+            (newMem, res) = restLists |> mapAccumL (\m l -> countPathsInGraph l m) memo
+            subResult = sum res
+        in (Map.insert rest subResult newMem, subResult)
 
 part2 list =
-        let graph = buildGraph Map.empty list
-        in trace ("Counting paths for graph: " ++ show graph) (countPathsInGraph graph Map.empty [] 0)
-
+   let (m, c) = countPathsInGraph list Map.empty
+   in c
 
 
 main :: IO ()
@@ -81,10 +73,9 @@ main = do
   let t1res = testInput |> sort |> part2
   print ("Part 2 test 1 result: " ++ show t1res)
 
-  -- let t2res = testInput2 |> sort |> part2
-  -- print ("Part 2 test 2 result: " ++ show t2res)
+  let t2res = testInput2 |> sort |> part2
+  print ("Part 2 test 2 result: " ++ show t2res)
 
   let sortedInput = input |> sort
-  print ("Input: " ++ show sortedInput)
   let p2res = sortedInput |> part2
   print ("Part 2 result: " ++ show p2res)
