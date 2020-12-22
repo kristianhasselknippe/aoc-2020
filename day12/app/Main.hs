@@ -13,29 +13,39 @@ data Movement = North | South | East | West | Forward | Left | Right
 
 type Direction = Int
 
-type State = (Direction, Position)
+type State = (Position, Position)
 
 type Action = (Movement, Int)
 
+rotatePoint :: Position -> Int -> Position
+rotatePoint (xx,yy) amount =
+    let x = fromIntegral xx
+        y = fromIntegral yy
+        rads = fromIntegral amount * (pi / 180.0)
+        newX = round (x * cos rads - y * sin rads)
+        newY = round (y * cos rads + x * sin rads)
+    in trace ("New WP: " ++ show (newX, newY)) (newX, newY)
+
+forward ((x,y), (wpX, wpY)) amount =
+    ((x + (wpX * amount), y + wpY * amount), (wpX, wpY))
+
 moveShip :: State -> Action -> State
-moveShip (dir, (x,y)) (move, amount) =
-    case move of
-      North -> (dir, (x, y - amount))
-      South -> (dir, (x, y + amount))
-      East -> (dir, (x + amount, y))
-      West -> (dir, (x - amount, y))
-      Forward -> case (trace ("Dir: " ++ show dir) dir) of
-          0 -> moveShip (dir, (x,y)) (East, amount)
-          90 -> moveShip (dir, (x,y)) (South, amount)
-          180 -> moveShip (dir, (x,y)) (West, amount)
-          270 -> moveShip (dir, (x,y)) (North, amount)
-      Main.Left -> ((dir - amount) `mod` 360, (x,y))
-      Main.Right -> ((dir + amount) `mod` 360, (x,y))
+moveShip (pos, (wpX,wpY)) (move, amount) =
+   let ret =
+        case move of
+          North -> (pos, (wpX, wpY + amount))
+          South -> (pos, (wpX, wpY - amount))
+          East -> (pos, (wpX + amount, wpY))
+          West -> (pos, (wpX - amount, wpY))
+          Forward -> forward (pos, (wpX, wpY)) amount
+          Main.Left -> (pos, rotatePoint (wpX, wpY)  amount)
+          Main.Right -> (pos, rotatePoint (wpX, wpY) (negate amount))
+   in trace ("New pos: " ++ show ret) ret
 
 decodeAction :: String -> Action
 decodeAction actionString =
         let (actionC:numStr) = actionString
-            action = case (trace ("Action: " ++ show actionC) actionC) of
+            action = case (trace ("Action: " ++ show actionC ++ ", AM: " ++ show numStr) actionC) of
               'N' -> North
               'S' -> South
               'W' -> West
@@ -48,7 +58,7 @@ decodeAction actionString =
 
 part1 input =
   let actions = input |> map decodeAction
-  in actions |> foldl moveShip (0, (0,0))
+  in actions |> foldl moveShip ((0,0), (10,1))
 
 
 main :: IO ()
@@ -59,6 +69,6 @@ main = do
   content <- readFile $ currentDir ++ "/" ++ path
   let input = content |> splitOn "\n" |> filter (not . null)
   print input
-  let (dir, (x,y)) = part1 input
+  let ((x,y), wp) = part1 input
   let dist = abs x + abs y
   print ("Output part1: " ++ show dist)
