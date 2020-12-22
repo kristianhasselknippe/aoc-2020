@@ -19,7 +19,7 @@ step seat neighbors =
       'L' -> if '#' `notElem` neighbors
                 then '#'
                 else 'L'
-      '#' -> if (neighbors |> filter ('#'==) |> length) >= 4
+      '#' -> if (neighbors |> filter ('#'==) |> length) >= 5
                 then 'L'
                 else '#'
       '.' -> '.'
@@ -35,12 +35,39 @@ gatherNeighbors seating (w, h) (x, y) =
   let n = neighborhood x y w h
   in n |> map (\(x,y) -> seating ! (w * y + x))
 
+
+safeGetNeighbor :: Array Int Char -> (Int, Int) -> (Int -> (Int,Int)) -> Int -> Char
+safeGetNeighbor seating (w,h) getSeat index =
+      let (x,y) = getSeat index
+      in if x >= 0 && x < w && y >= 0 && y < h
+            then let s = seating ! (y*w+x)
+                 in if s /= '.'
+                       then s
+                       else safeGetNeighbor seating (w,h) getSeat (index + 1)
+            else '.'
+
+gatherNeighborsP2 :: Array Int Char -> (Int, Int) -> (Int, Int) -> [Char]
+gatherNeighborsP2 seating (w, h) (x, y) =
+  let directions = [\i -> (x,y + i),
+                    \i -> (x,y - i),
+                    \i -> (x + i, y),
+                    \i -> (x - i, y),
+
+                    \i -> (x + i, y + i),
+                    \i -> (x - i ,y - i),
+                    \i -> (x + i, y - i),
+                    \i -> (x - i ,y + i)]
+
+      res = directions |> map (\dir -> safeGetNeighbor seating (w,h) dir 1)
+  in trace (show (x,y) ++ ": " ++ show res) res
+
 part1Update :: (Int, Int) -> Array Int Char -> Array Int Char
 part1Update (w, h) input =
    [(x,y) | y <- [0..h-1], x <- [0..w-1]]
-        |> map (\(x,y) -> let ns = gatherNeighbors input (w, h) (x, y)
+        |> map (\(x,y) -> let ns = gatherNeighborsP2 input (w, h) (x, y)
                           --in step (input ! (trace ("WH: " ++ show (w,h) ++ ", XY: " ++ show (x,y) ++ ", I: " ++ show (y * w + x)) (y * w + x))) ns
-                          in step (input ! (y * w + x)) ns
+                              res = step (input ! (y * w + x)) ns
+                          in trace ("   step: " ++ show res) res
       )
         |> listArray (0, w * h - 1)
 
