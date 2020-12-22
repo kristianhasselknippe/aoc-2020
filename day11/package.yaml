@@ -27,6 +27,7 @@ dependencies:
 - sort
 - containers
 - flow
+- array
 
 library:
   source-dirs: src
